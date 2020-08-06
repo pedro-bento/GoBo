@@ -1,6 +1,8 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 type command func(*bot, bool, ...string) string
 
@@ -22,21 +24,24 @@ func (b *bot) resolveMsg(user, msg, carry string, pipe bool) string {
 	return ""
 }
 
-func (b *bot) resolveCompose(user string, composition []string) {
-	fst := composition[0]
-	lst := composition[len(composition)-1]
-	it := composition[1 : len(composition)-1]
+func (b *bot) resolveCompose(user string, pipe bool, composition []string) string {
+	carry := ""
 
-	// Get the first result applying the last command of the composition to it's argument.
-	carry := b.resolveMsg(user, lst, "", true)
+	if len(composition) > 1 {
+		// Get the first result applying the last command of the composition to it's argument.
+		lst := composition[len(composition)-1]
+		carry = b.resolveMsg(user, lst, "", true)
 
-	// Traverse all middle commands carrying the result.
-	for i := len(it) - 1; i >= 0; i-- {
-		carry = b.resolveMsg(user, it[i], carry, true)
+		it := composition[1 : len(composition)-1]
+		// Traverse all middle commands carrying the result.
+		for i := len(it) - 1; i >= 0; i-- {
+			carry = b.resolveMsg(user, it[i], carry, true)
+		}
 	}
 
 	// Apply the first command with arg + result and send it's result to twitch chat
-	b.resolveMsg(user, fst, carry, false)
+	fst := composition[0]
+	return b.resolveMsg(user, fst, carry, pipe)
 }
 
 func cmdPing(b *bot, pipe bool, args ...string) string {
@@ -74,6 +79,19 @@ func cmdEcho(b *bot, pipe bool, args ...string) string {
 	return ""
 }
 
+func cmdMe(b *bot, pipe bool, args ...string) string {
+	user := args[0]
+
+	result := user
+
+	if pipe {
+		return result
+	}
+
+	b.sendToChat(result)
+	return ""
+}
+
 func cmdSay(b *bot, pipe bool, args ...string) string {
 	user := args[0]
 	arg := strings.Join(args[1:], " ")
@@ -85,5 +103,32 @@ func cmdSay(b *bot, pipe bool, args ...string) string {
 	}
 
 	b.sendToChat(result)
+	return ""
+}
+
+func cmdAddCmd(b *bot, pipe bool, args ...string) string {
+	user := args[0]
+	splited := strings.Split(strings.TrimSpace(args[1]), " ")
+	cmdName := splited[0]
+	cmdBody := strings.Join(splited[1:], " ")
+	cmdBody = cmdBody + strings.Join(args[2:], " ")
+
+	b.addCmdToFile(cmdName + " " + cmdBody)
+
+	b.addCmd(cmdName, func(b1 *bot, pipe1 bool, args1 ...string) string {
+		cmdArgs := strings.Join(args1[1:], " ")
+		cmd := cmdBody + cmdArgs
+		composition := strings.Split(cmd, "$")
+
+		result := b1.resolveCompose(user, true, composition)
+
+		if pipe1 {
+			return result
+		}
+
+		b.sendToChat(result)
+		return ""
+	})
+
 	return ""
 }

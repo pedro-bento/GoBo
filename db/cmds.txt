@@ -1,0 +1,4 @@
+iam !echo I'm $ !me
+iam2 !echo I'm2 $ !me
+iam3 !echo I'm3 $ !me
+iam4 !echo I'm4 $ !me

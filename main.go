@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 )
@@ -12,7 +13,7 @@ const (
 
 func checkError(e error) {
 	if e != nil {
-		// fmt.Println(e)
+		fmt.Println(e)
 	}
 }
 
@@ -32,6 +33,10 @@ func main() {
 	b.addCmd("twitchbot", cmdTwitchBot)
 	b.addCmd("echo", cmdEcho)
 	b.addCmd("say", cmdSay)
+	b.addCmd("me", cmdMe)
+	b.addCmd("addcmd", cmdAddCmd)
+
+	b.addCmdsFromDB()
 
 	b.run()
 }
