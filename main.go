@@ -12,12 +12,11 @@ const (
 
 func checkError(e error) {
 	if e != nil {
-		panic(e)
+		// fmt.Println(e)
 	}
 }
 
-// TODO
-//  impl wait group -> wait before disconnect
+// TODO:
 //	impl addcmd command (store commands in file)
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 	checkError(err)
 	oauthToken := strings.Trim(string(oauthTokenRaw), " \n")
 
-	b := newBot("cseea", oauthToken, "#cseea")
+	b := newBot("gobo_cseea", oauthToken, "#cseea")
 	b.connect()
 	defer b.disconnect()
 

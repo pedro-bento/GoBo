@@ -77,72 +77,22 @@ func (b *bot) handlePing(data string) {
 	b.send(toSend)
 }
 
-func msgToCmdArg(msg string) (string, string) {
-	msg = strings.TrimSpace(msg)
-	msg = strings.TrimPrefix(msg, "!")
-	cmd := strings.Split(msg, " ")[0]
-	arg := strings.TrimPrefix(msg, cmd)
-	return cmd, arg
-}
-
 func (b *bot) handlePrivmsg(data string) {
 	fields := strings.Split(data, ".tmi.twitch.tv PRIVMSG "+b.channel+" :")
-
 	splitedUserField := strings.Split(fields[0], "@")
+
 	user := splitedUserField[len(splitedUserField)-1]
 	msg := fields[1]
 
+	// Make sure it's a command.
 	if !strings.HasPrefix(msg, "!") {
 		return
 	}
 
-	// TODO:
-	//	Clean up.
-	if msgs := strings.Split(msg, "$"); len(msgs) > 1 {
-		fst := msgs[0]
-		lst := msgs[len(msgs)-1]
-		it := msgs[1 : len(msgs)-1]
-
-		var result string
-
-		// Get the first result applying the last command of the composition to it's argument.
-		cmd, arg := msgToCmdArg(lst)
-		if f, ok := b.commads[cmd]; ok {
-			result = f(b, true, user, arg)
-		} else {
-			b.sendToChat("@" + user + " unknown command")
-			return
-		}
-
-		// Traverse all middle commands carrying the result.
-		for i := len(it) - 1; i >= 0; i-- {
-			cmd, arg := msgToCmdArg(it[i])
-			if f, ok := b.commads[cmd]; ok {
-				result = f(b, true, user, arg, result)
-			} else {
-				b.sendToChat("@" + user + " unknown command")
-				return
-			}
-		}
-
-		// Apply the first command with arg + result and send it's result to twitch chat
-		cmd, arg = msgToCmdArg(fst)
-		if f, ok := b.commads[cmd]; ok {
-			result = f(b, false, user, arg, result)
-		} else {
-			b.sendToChat("@" + user + " unknown command")
-			return
-		}
-
+	if composition := strings.Split(msg, "$"); len(composition) > 1 {
+		b.resolveCompose(user, composition)
 	} else {
-		cmd, arg := msgToCmdArg(msg)
-
-		if f, ok := b.commads[cmd]; ok {
-			f(b, false, user, arg)
-		} else {
-			b.sendToChat("@" + user + " unknown command")
-			return
-		}
+		b.resolveMsg(user, msg, "", false)
 	}
 }
 
