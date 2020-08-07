@@ -17,16 +17,15 @@ func checkError(e error) {
 }
 
 // TODO:
-//	clean up code :p
-
 // cmd call premisions
-
-// aritmetics
-// !+ , !* , !- , !/
 
 // maybe limit the amount of commands in compositions
 
 // REPL
+
+// ????????    Multi Level Parsing
+// !parse 2 !insert !+ %% $ !square %% <<
+// !bin !+ (!square) (!id) x
 
 func main() {
 	oauthTokenRaw, err := ioutil.ReadFile("./secret/oauth_token.txt")
@@ -41,6 +40,14 @@ func main() {
 	b.addCmd("echo", cmdEcho)
 	b.addCmd("me", cmdMe)
 	b.addCmd("insert", cmdInsert)
+	b.addCmd("repeat", cmdRepeat)
+
+	b.addCmd("+", cmdAdd)
+	b.addCmd("-", cmdMinus)
+	b.addCmd("*", cmdMult)
+	b.addCmd("/", cmdDiv)
+	b.addCmd("%", cmdMod)
+
 	b.addCmd("addcmd", cmdAddCmd)   // streamer / bot
 	b.addCmd("addrcmd", cmdAddRCmd) // streamer / bot
 

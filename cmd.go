@@ -44,7 +44,7 @@ func resolveComposition(b *bot, user string, pipe bool, composition []string) st
 }
 
 func cmdFromString(str string) (string, string, command) {
-	splited := strings.Split(strings.TrimSpace(str), " ")
+	splited := strings.Fields(str)
 	cmdName := splited[0]
 	cmdBody := strings.Join(splited[1:], " ")
 

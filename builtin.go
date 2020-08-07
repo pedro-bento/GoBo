@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -44,7 +46,7 @@ func cmdAddCmd(b *bot, pipe bool, args ...string) string {
 }
 
 func cmdAddRCmd(b *bot, pipe bool, args ...string) string {
-	argsTemp := strings.Split(strings.TrimSpace(args[1]), " ")
+	argsTemp := strings.Fields(args[1])
 	cmdName := argsTemp[0]
 	cmdDelta := argsTemp[1]
 
@@ -65,16 +67,132 @@ func cmdInsert(b *bot, pipe bool, args ...string) string {
 	arg1 := argTemp[1]
 	arg2 := argTemp[0]
 
-	arg2Temp := strings.Split(arg2, "%%")
-	arg2a := arg2Temp[0]
-	arg2b := arg2Temp[1]
-
-	result := arg2a + " " + arg1 + " " + arg2b
+	result := strings.Replace(arg2, "%%", arg1, -1)
 
 	if pipe {
 		return result
 	}
 
 	b.sendToChat(result)
+	return ""
+}
+
+func cmdRepeat(b *bot, pipe bool, args ...string) string {
+	m, _ := strconv.ParseInt(strings.Fields(args[1])[0], 10, 64)
+	n := int(m)
+	arghead := strings.Join(strings.Fields(args[1])[1:], " ")
+	argtail := strings.Join(args[2:], " ")
+	arg := strings.TrimSpace(arghead + " " + argtail)
+
+	result := ""
+	for i := 0; i < n; i++ {
+		result = result + " " + arg
+	}
+
+	if pipe {
+		return result
+	}
+
+	b.sendToChat(result)
+	return ""
+}
+
+func cmdAdd(b *bot, pipe bool, args ...string) string {
+	arg := strings.Join(args[1:], " ")
+	numbersStr := strings.Fields(arg)
+
+	result, _ := strconv.ParseFloat(numbersStr[0], 64)
+	numbersStr = numbersStr[1:]
+
+	for _, numStr := range numbersStr {
+		num, _ := strconv.ParseFloat(numStr, 64)
+		result += num
+	}
+
+	if pipe {
+		return strconv.FormatFloat(result, 'f', 2, 64)
+	}
+
+	b.sendToChat(strconv.FormatFloat(result, 'f', 2, 64))
+	return ""
+}
+
+func cmdMinus(b *bot, pipe bool, args ...string) string {
+	arg := strings.Join(args[1:], " ")
+	numbersStr := strings.Fields(arg)
+
+	result, _ := strconv.ParseFloat(numbersStr[0], 64)
+	numbersStr = numbersStr[1:]
+
+	for _, numStr := range numbersStr {
+		num, _ := strconv.ParseFloat(numStr, 64)
+		result -= num
+	}
+
+	if pipe {
+		return strconv.FormatFloat(result, 'f', 2, 64)
+	}
+
+	b.sendToChat(strconv.FormatFloat(result, 'f', 2, 64))
+	return ""
+}
+
+func cmdMult(b *bot, pipe bool, args ...string) string {
+	arg := strings.Join(args[1:], " ")
+	numbersStr := strings.Fields(arg)
+
+	result, _ := strconv.ParseFloat(numbersStr[0], 64)
+	numbersStr = numbersStr[1:]
+
+	for _, numStr := range numbersStr {
+		num, _ := strconv.ParseFloat(numStr, 64)
+		result *= num
+	}
+
+	if pipe {
+		return strconv.FormatFloat(result, 'f', 2, 64)
+	}
+
+	b.sendToChat(strconv.FormatFloat(result, 'f', 2, 64))
+	return ""
+}
+
+func cmdDiv(b *bot, pipe bool, args ...string) string {
+	arg := strings.Join(args[1:], " ")
+	numbersStr := strings.Fields(arg)
+
+	result, _ := strconv.ParseFloat(numbersStr[0], 64)
+	numbersStr = numbersStr[1:]
+
+	for _, numStr := range numbersStr {
+		num, _ := strconv.ParseFloat(numStr, 64)
+		result /= num
+	}
+
+	if pipe {
+		return strconv.FormatFloat(result, 'f', 2, 64)
+	}
+
+	b.sendToChat(strconv.FormatFloat(result, 'f', 2, 64))
+	return ""
+}
+
+func cmdMod(b *bot, pipe bool, args ...string) string {
+	arg := strings.Join(args[1:], " ")
+	numbersStr := strings.Fields(arg)
+
+	result, _ := strconv.ParseFloat(numbersStr[0], 64)
+	numbersStr = numbersStr[1:]
+
+	for _, numStr := range numbersStr {
+		num, _ := strconv.ParseFloat(numStr, 64)
+		result = math.Mod(result, num)
+	}
+
+	if pipe {
+		return strconv.FormatFloat(result, 'f', 2, 64)
+	}
+
+	b.sendToChat(strconv.FormatFloat(result, 'f', 2, 64))
 	return ""
 }

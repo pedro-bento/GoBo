@@ -4,3 +4,6 @@ say !me $ echo  said,
 example !echo text $ !echo text2 $ !me 
 think !insert Have you ever thought about %% in your life? <<
 follow !echo GoBo want's you to follow cseea!
+cube !* $ !repeat 3
+square !* $ !insert %% %% <<
+^4 !* $ !repeat 4
