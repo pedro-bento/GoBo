@@ -8,69 +8,87 @@ import (
 	"net/textproto"
 	"os"
 	"strings"
+	"time"
 )
 
+type rcmd struct {
+	cmdName string
+	delta   time.Duration
+}
+
 type bot struct {
-	nickname       string
-	oauthToken     string
-	channel        string
-	conn           net.Conn
-	reader         *textproto.Reader
-	writer         *textproto.Writer
-	commads        map[string]command
-	dbCmdsFilepath string
+	nickname          string
+	oauthToken        string
+	channel           string
+	conn              net.Conn
+	reader            *textproto.Reader
+	writer            *textproto.Writer
+	commands          map[string]command
+	recurrentCommands []rcmd
+	dbCmdsFilepath    string
+	dbRCmdsFilepath   string
 }
 
 func newBot(nickname, oauthToken, channel string) bot {
 	return bot{
-		nickname:       nickname,
-		oauthToken:     oauthToken,
-		channel:        channel,
-		commads:        make(map[string]command),
-		dbCmdsFilepath: "./db/cmds.txt",
+		nickname:        nickname,
+		oauthToken:      oauthToken,
+		channel:         channel,
+		commands:        make(map[string]command),
+		dbCmdsFilepath:  "./db/cmds.txt",
+		dbRCmdsFilepath: "./db/rcmds.txt",
 	}
 }
 
 func (b *bot) addCmd(cmd string, f command) {
-	b.commads[cmd] = f
-}
-
-func (b *bot) cmdFromString(str string) (string, command) {
-	splited := strings.Split(strings.TrimSpace(str), " ")
-	cmdName := splited[0]
-	cmdBody := strings.Join(splited[1:], " ")
-
-	return cmdName, func(b1 *bot, pipe1 bool, args1 ...string) string {
-		cmdArgs := strings.Join(args1[1:], " ")
-		cmd := cmdBody + cmdArgs
-		composition := strings.Split(cmd, "$")
-
-		result := b1.resolveCompose(args1[0], true, composition)
-
-		if pipe1 {
-			return result
-		}
-
-		b.sendToChat(result)
-		return ""
-	}
+	b.commands[cmd] = f
 }
 
 func (b *bot) addCmdsFromDB() {
 	data, err := ioutil.ReadFile(b.dbCmdsFilepath)
 	checkError(err)
-	cmds := strings.Split(string(data), "\n")
-	for _, cmd := range cmds {
-		cmdName, cmdFunc := b.cmdFromString(cmd)
-		b.addCmd(cmdName, cmdFunc) 
+	if len(string(data)) > 0 {
+		cmds := strings.Split(strings.TrimSpace(string(data)), "\n")
+		for _, cmd := range cmds {
+			cmdName, _, cmdFunc := cmdFromString(cmd)
+			b.addCmd(cmdName, cmdFunc)
+		}
 	}
 }
 
-func (b *bot) addCmdToFile(data string) {
+func (b *bot) addCmdToDB(data string) {
 	file, err := os.OpenFile(b.dbCmdsFilepath, os.O_APPEND|os.O_WRONLY, 0777)
 	checkError(err)
 	defer file.Close()
-	_, err = file.WriteString(data + "\n")
+	_, err = file.WriteString("\n" + data)
+	checkError(err)
+}
+
+func (b *bot) addRCmd(cmdName, duration string) {
+	dur, err := time.ParseDuration(duration)
+	checkError(err)
+	b.recurrentCommands = append(b.recurrentCommands, rcmd{cmdName, dur})
+}
+
+func (b *bot) addRCmdsFromDB() {
+	data, err := ioutil.ReadFile(b.dbRCmdsFilepath)
+	checkError(err)
+	if len(string(data)) > 0 {
+		rcmds := strings.Split(strings.TrimSpace(string(data)), "\n")
+		for _, rcmd := range rcmds {
+			rcmdTemp := strings.Split(rcmd, " ")
+			rcmdName := rcmdTemp[0]
+			rcmdDelta := rcmdTemp[1]
+			b.addRCmd(rcmdName, rcmdDelta)
+		}
+	}
+}
+
+func (b *bot) addRCmdToDB(data string) {
+	file, err := os.OpenFile(b.dbRCmdsFilepath, os.O_APPEND|os.O_WRONLY, 0777)
+	checkError(err)
+	defer file.Close()
+	_, err = file.WriteString("\n" + data)
 	checkError(err)
 }
 
@@ -132,11 +150,11 @@ func (b *bot) handlePrivmsg(data string) {
 	}
 
 	if strings.Contains(msg, "addcmd") {
-		b.resolveMsg(user, msg, "", false)
+		resolveMsg(b, user, msg, "", false)
 	} else if composition := strings.Split(msg, "$"); len(composition) > 1 {
-		b.resolveCompose(user, false, composition)
+		resolveComposition(b, user, false, composition)
 	} else {
-		b.resolveMsg(user, msg, "", false)
+		resolveMsg(b, user, msg, "", false)
 	}
 }
 
@@ -147,7 +165,21 @@ func (b *bot) isQuit() {
 	os.Exit(0)
 }
 
+func (b *bot) runRecurrent(rc rcmd) {
+	for {
+		if f, ok := b.commands[rc.cmdName]; ok {
+			f(b, false, b.nickname, "", "")
+		}
+
+		time.Sleep(rc.delta)
+	}
+}
+
 func (b *bot) run() {
+	for _, rc := range b.recurrentCommands {
+		go b.runRecurrent(rc)
+	}
+
 	for {
 		go b.isQuit()
 

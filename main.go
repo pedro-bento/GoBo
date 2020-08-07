@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"strings"
 )
@@ -13,12 +12,21 @@ const (
 
 func checkError(e error) {
 	if e != nil {
-		fmt.Println(e)
+		// fmt.Println(e)
 	}
 }
 
 // TODO:
-//	impl addcmd command (store commands in file)
+//	clean up code :p
+
+// cmd call premisions
+
+// aritmetics
+// !+ , !* , !- , !/
+
+// maybe limit the amount of commands in compositions
+
+// REPL
 
 func main() {
 	oauthTokenRaw, err := ioutil.ReadFile("./secret/oauth_token.txt")
@@ -29,14 +37,17 @@ func main() {
 	b.connect()
 	defer b.disconnect()
 
-	b.addCmd("ping", cmdPing)
-	b.addCmd("twitchbot", cmdTwitchBot)
+	// add builtins
 	b.addCmd("echo", cmdEcho)
-	b.addCmd("say", cmdSay)
 	b.addCmd("me", cmdMe)
-	b.addCmd("addcmd", cmdAddCmd)
+	b.addCmd("insert", cmdInsert)
+	b.addCmd("addcmd", cmdAddCmd)   // streamer / bot
+	b.addCmd("addrcmd", cmdAddRCmd) // streamer / bot
 
 	b.addCmdsFromDB()
+
+	// add recurrents
+	b.addRCmdsFromDB()
 
 	b.run()
 }

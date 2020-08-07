@@ -1,4 +1,6 @@
-iam !echo I'm $ !me
-iam2 !echo I'm2 $ !me
-iam3 !echo I'm3 $ !me
-iam4 !echo I'm4 $ !me
+ping !echo pong 
+twitchbot !echo no one: absolutely no one: programming streamers: let's make another twitch bot LUL - arn4vv 2020
+say !me $ echo  said,
+example !echo text $ !echo text2 $ !me 
+think !insert Have you ever thought about %% in your life? <<
+follow !echo GoBo want's you to follow cseea!
