@@ -1,9 +1,9 @@
-ping !echo pong 
-twitchbot !echo no one: absolutely no one: programming streamers: let's make another twitch bot LUL - arn4vv 2020
-say !me $ echo  said,
-example !echo text $ !echo text2 $ !me 
-think !insert Have you ever thought about %% in your life? <<
-follow !echo GoBo want's you to follow cseea!
-cube !* $ !repeat 3
-square !* $ !insert %% %% <<
-^4 !* $ !repeat 4
+
+none ping !echo pong
+none twitchbot !echo no one: absolutely no one: programming streamers: let's make another twitch bot LUL - arn4vv 2020
+none say !me $ echo said,
+none think !insert Have you ever thought about %% in your life? <<
+none follow !echo GoBo want's you to follow cseea!
+none cube !* $ !repeat 3
+none square !* $ !insert %% %% <<
+none ^4 !* $ !repeat 4

@@ -1,3 +1,2 @@
 
 follow 15m
-example 1h

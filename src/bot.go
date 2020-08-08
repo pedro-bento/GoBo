@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-type rcmd struct {
-	cmdName string
-	delta   time.Duration
-}
-
 type bot struct {
 	nickname          string
 	oauthToken        string
@@ -50,8 +45,8 @@ func (b *bot) addCmdsFromDB() {
 	if len(string(data)) > 0 {
 		cmds := strings.Split(strings.TrimSpace(string(data)), "\n")
 		for _, cmd := range cmds {
-			cmdName, _, cmdFunc := cmdFromString(cmd)
-			b.addCmd(cmdName, cmdFunc)
+			cmdName, _, _, cmdStruc := cmdFromString(cmd)
+			b.addCmd(cmdName, cmdStruc)
 		}
 	}
 }
@@ -118,6 +113,8 @@ func (b *bot) connect() {
 	b.send("NICK " + b.nickname)
 	b.send("JOIN " + b.channel)
 
+	b.requestTags()
+
 	fmt.Println("Connected.")
 }
 
@@ -131,6 +128,10 @@ func (b *bot) sendToChat(msg string) {
 	b.send("PRIVMSG " + b.channel + " :" + msg + "\r\n")
 }
 
+func (b *bot) requestTags() {
+	b.send("CAP REQ :twitch.tv/tags")
+}
+
 func (b *bot) handlePing(data string) {
 	toSend := strings.ReplaceAll(data, "PING", "PONG")
 	fmt.Println("Responding to server PING -> ", toSend)
@@ -139,9 +140,11 @@ func (b *bot) handlePing(data string) {
 
 func (b *bot) handlePrivmsg(data string) {
 	fields := strings.Split(data, ".tmi.twitch.tv PRIVMSG "+b.channel+" :")
-	splitedUserField := strings.Split(fields[0], "@")
+	tagsUserField := strings.Split(fields[0], " :")
+	userField := strings.Split(tagsUserField[1], "@")
 
-	user := splitedUserField[len(splitedUserField)-1]
+	tags := tagsUserField[0]
+	user := userField[len(userField)-1]
 	msg := fields[1]
 
 	// Make sure it's a command.
@@ -149,12 +152,14 @@ func (b *bot) handlePrivmsg(data string) {
 		return
 	}
 
+	userBadge := badgeFromString(tags)
+
 	if strings.Contains(msg, "addcmd") {
-		resolveMsg(b, user, msg, "", false)
+		resolveMsg(b, userBadge, user, msg, "", false)
 	} else if composition := strings.Split(msg, "$"); len(composition) > 1 {
-		resolveComposition(b, user, false, composition)
+		resolveComposition(b, userBadge, user, false, composition)
 	} else {
-		resolveMsg(b, user, msg, "", false)
+		resolveMsg(b, userBadge, user, msg, "", false)
 	}
 }
 
@@ -168,7 +173,7 @@ func (b *bot) isQuit() {
 func (b *bot) runRecurrent(rc rcmd) {
 	for {
 		if f, ok := b.commands[rc.cmdName]; ok {
-			f(b, false, b.nickname, "", "")
+			f.action(b, false, b.nickname, "", "")
 		}
 
 		time.Sleep(rc.delta)
