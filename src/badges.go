@@ -11,13 +11,20 @@ const (
 	badgeNone        badge = 3
 )
 
+var badgeStringMap = map[string]badge{
+	"god":         badgeGod,
+	"broadcaster": badgeBroadcaster,
+	"moderator":   badgeModerator,
+	"none":        badgeNone,
+}
+
 func badgeFromString(str string) badge {
-	if strings.Contains(str, "broadcaster") {
+	if strings.Contains(str, "god") {
+		return badgeGod
+	} else if strings.Contains(str, "broadcaster") {
 		return badgeBroadcaster
 	} else if strings.Contains(str, "moderator") {
 		return badgeModerator
-	} else if strings.Contains(str, "god") {
-		return badgeGod
 	}
 
 	return badgeNone

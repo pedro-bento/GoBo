@@ -1,9 +1,10 @@
-
 none ping !echo pong
 none twitchbot !echo no one: absolutely no one: programming streamers: let's make another twitch bot LUL - arn4vv 2020
 none say !me $ echo said,
 none think !insert Have you ever thought about %% in your life? <<
-none follow !echo GoBo want's you to follow cseea!
 none cube !* $ !repeat 3
 none square !* $ !insert %% %% <<
 none ^4 !* $ !repeat 4
+none github !echo https://github.com/pedro-bento
+none follow !echo If you are enjoying the stream think about following this guy PogChamp
+none youtube !echo Check out my youtube channel! https://www.youtube.com/channel/UCW09wTSVFurzl2lsMUcHMkQ

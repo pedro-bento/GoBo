@@ -7,29 +7,42 @@ import (
 	"net"
 	"net/textproto"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type bot struct {
-	nickname          string
-	oauthToken        string
-	channel           string
-	conn              net.Conn
-	reader            *textproto.Reader
-	writer            *textproto.Writer
-	commands          map[string]command
-	recurrentCommands []rcmd
-	dbCmdsFilepath    string
-	dbRCmdsFilepath   string
+	nickname              string
+	oauthToken            string
+	channel               string
+	numMessagesInCicle    int
+	maxNumMessagesInCicle int
+	lastCicleTime         time.Time
+	cicleDuration         time.Duration
+	conn                  net.Conn
+	reader                *textproto.Reader
+	writer                *textproto.Writer
+	commands              map[string]command
+	recurrentCommands     []rcmd
+	dbCmdsFilepath        string
+	dbRCmdsFilepath       string
 }
 
 func newBot(nickname, oauthToken, channel string) bot {
+	dur, _ := time.ParseDuration("30s")
 	return bot{
-		nickname:        nickname,
-		oauthToken:      oauthToken,
-		channel:         channel,
-		commands:        make(map[string]command),
+		nickname:   nickname,
+		oauthToken: oauthToken,
+		channel:    channel,
+
+		numMessagesInCicle:    0,
+		maxNumMessagesInCicle: 20,
+		cicleDuration:         dur,
+		lastCicleTime:         time.Now(),
+
+		commands: make(map[string]command),
+
 		dbCmdsFilepath:  "./db/cmds.txt",
 		dbRCmdsFilepath: "./db/rcmds.txt",
 	}
@@ -45,8 +58,10 @@ func (b *bot) addCmdsFromDB() {
 	if len(string(data)) > 0 {
 		cmds := strings.Split(strings.TrimSpace(string(data)), "\n")
 		for _, cmd := range cmds {
-			cmdName, _, _, cmdStruc := cmdFromString(cmd)
-			b.addCmd(cmdName, cmdStruc)
+			cmdName, _, cmdPerm, cmdStruc := cmdFromString(cmd)
+			if _, ok := badgeStringMap[cmdPerm]; ok {
+				b.addCmd(cmdName, cmdStruc)
+			}
 		}
 	}
 }
@@ -74,7 +89,9 @@ func (b *bot) addRCmdsFromDB() {
 			rcmdTemp := strings.Split(rcmd, " ")
 			rcmdName := rcmdTemp[0]
 			rcmdDelta := rcmdTemp[1]
-			b.addRCmd(rcmdName, rcmdDelta)
+			if _, ok := b.commands[rcmdName]; ok {
+				b.addRCmd(rcmdName, rcmdDelta)
+			}
 		}
 	}
 }
@@ -88,8 +105,17 @@ func (b *bot) addRCmdToDB(data string) {
 }
 
 func (b *bot) send(data string) {
-	err := b.writer.PrintfLine(data)
-	checkError(err)
+	now := time.Now()
+	if now.Sub(b.lastCicleTime) > b.cicleDuration {
+		b.lastCicleTime = time.Now()
+		b.numMessagesInCicle = 0
+	}
+
+	b.numMessagesInCicle++
+	if b.numMessagesInCicle <= b.maxNumMessagesInCicle {
+		err := b.writer.PrintfLine(data)
+		checkError(err)
+	}
 }
 
 func (b *bot) receive() string {
@@ -177,6 +203,13 @@ func (b *bot) runRecurrent(rc rcmd) {
 		}
 
 		time.Sleep(rc.delta)
+	}
+}
+
+func (b *bot) test() {
+	time.Sleep(31 * time.Second)
+	for i := 0; i < 22; i++ {
+		b.sendToChat(strconv.FormatInt(int64(i), 10))
 	}
 }
 

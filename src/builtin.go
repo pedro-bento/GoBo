@@ -32,15 +32,17 @@ func cmdMe(b *bot, pipe bool, args ...string) string {
 
 	b.sendToChat(result)
 	return ""
-} 
+}
 
 func cmdAddCmd(b *bot, pipe bool, args ...string) string {
 	str := strings.Join(args[1:], " ")
 
 	cmdName, cmdBody, cmdPerm, cmd := cmdFromString(str)
 
-	b.addCmd(cmdName, cmd)
-	b.addCmdToDB(cmdPerm + " " + cmdName + " " + cmdBody)
+	if _, ok := badgeStringMap[cmdPerm]; ok {
+		b.addCmd(cmdName, cmd)
+		b.addCmdToDB(cmdPerm + " " + cmdName + " " + cmdBody)
+	}
 
 	return ""
 }
